@@ -1,49 +1,43 @@
-import mysql from "mysql2/promise";
+import { Sequelize } from "sequelize";
 import config from "../config/config";
 
-let connection: mysql.Connection | null = null;
-
-const mysqlConfig: mysql.ConnectionOptions = {
-  host: config.database.mysql.host,
+const MysqlCred = {
+  hostname: config.database.mysql.host,
   port: config.database.mysql.port,
-  database: config.database.mysql.database,
-  user: config.database.mysql.user,
+  database: config.database.mysql.database || "mydb",
+  username: config.database.mysql.user,
   password: config.database.mysql.password,
 };
 
+const sequelize = new Sequelize(
+  MysqlCred.database!,
+  MysqlCred.username!,
+  MysqlCred.password,
+  {
+    host: MysqlCred.hostname,
+    dialect: "mysql",
+  }
+);
+
 export async function connectToMySQL(): Promise<void> {
-  connection = await mysql.createConnection(mysqlConfig);
+  await sequelize.authenticate();
 }
 
-export async function queryDatabaseWithTransaction(
-  queries: { sql: string; params?: any[] }[]
-): Promise<any[]> {
-  if (!connection) {
-    throw new Error("No active connection");
-  }
+export async function queryDatabaseWithTransaction(query: {
+  sql: string;
+  params?: any[];
+}): Promise<any[]> {
+  let result: any;
 
-  const results: any[] = [];
-
-  await connection.beginTransaction();
-
-  try {
-    for (const query of queries) {
-      const [result] = await connection.query(query.sql, query.params);
-      results.push(result);
-    }
-
-    await connection.commit();
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  }
-
-  return results;
+  await sequelize.transaction(async (t) => {
+    result = await sequelize.query(query.sql, {
+      replacements: query.params,
+      transaction: t,
+    });
+  });
+  return result;
 }
 
 export async function closeMySQLConnection(): Promise<void> {
-  if (connection) {
-    await connection.end();
-    connection = null;
-  }
+  await sequelize.close();
 }

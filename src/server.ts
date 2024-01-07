@@ -2,6 +2,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import bodyParser from "body-parser";
 
 import config from "./config/config";
 import route from "./routes/route";
@@ -23,6 +24,10 @@ app.use(
     origin: "*",
   })
 );
+
+app.use(bodyParser.urlencoded({ extended: false }));
+
+app.use(bodyParser.json());
 
 app.use((req, res, next) => {
   res.setHeader("Custom-Header", "application/json");
