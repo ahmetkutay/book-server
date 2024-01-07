@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from "express";
 import {
   borrowBook,
   createUser,
@@ -7,6 +7,7 @@ import {
   returnBook,
 } from "../../services/userService";
 import { HTTP_STATUS } from "../../CONSTANTS/httpConstants";
+import { validateScore, validateUser } from "../../middleware/bodyValidator";
 
 const usersRoute = express.Router();
 
@@ -20,13 +21,15 @@ usersRoute.get("/:id", async (req, res) => {
   res.status(HTTP_STATUS.OK).json(result);
 });
 
-usersRoute.post("/", async (req, res) => {
+usersRoute.post("/", validateUser, async (req: Request, res: Response) => {
   const userName = req.body.name;
   const result = await createUser(userName);
   if (!result) {
-    res.status(HTTP_STATUS.BAD_REQUEST).json("Name Already Exists");
+    res
+      .status(HTTP_STATUS.BAD_REQUEST)
+      .json("User with the same name already exists");
   }
-  res.status(HTTP_STATUS.CREATED).json("Ok");
+  res.status(HTTP_STATUS.CREATED).json("User created successfully");
 });
 
 usersRoute.post("/:userId/borrow/:bookId", async (req, res) => {
@@ -37,14 +40,18 @@ usersRoute.post("/:userId/borrow/:bookId", async (req, res) => {
   res.status(HTTP_STATUS.OK).json(result);
 });
 
-usersRoute.post("/:userId/return/:bookId", async (req, res) => {
-  const bookScore: number = parseInt(req.body.score) || 0;
-  const result = await returnBook(
-    parseInt(req.params.userId),
-    parseInt(req.params.bookId),
-    bookScore
-  );
-  res.status(HTTP_STATUS.OK).json(result);
-});
+usersRoute.post(
+  "/:userId/return/:bookId",
+  validateScore,
+  async (req: Request, res: Response) => {
+    const bookScore: number = parseInt(req.body.score) || 0;
+    const result = await returnBook(
+      parseInt(req.params.userId),
+      parseInt(req.params.bookId),
+      bookScore
+    );
+    res.status(HTTP_STATUS.OK).json(result);
+  }
+);
 
 export default usersRoute;
