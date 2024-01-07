@@ -5,7 +5,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 const config = {
   database: {
     mysql: {
-      host: process.env.MYSQL_HOST || "localhost",
+      host: process.env.MYSQL_HOST || "127.0.0.1",
       port: parseInt(process.env.MYSQL_PORT ?? ""),
       database: process.env.MYSQL_DB,
       user: process.env.MYSQL_USER,

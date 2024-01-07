@@ -14,7 +14,7 @@ const sequelize = new Sequelize(
   MysqlCred.username!,
   MysqlCred.password,
   {
-    host: MysqlCred.hostname,
+    host: "mysql",
     dialect: "mysql",
   }
 );
