@@ -85,6 +85,18 @@ export async function getUserById(id: number): Promise<any> {
  * @returns An object with the ID of the user who borrowed the book.
  */
 export async function borrowBook(userId: number, bookId: number) {
+  const isBookBorrowedSql =
+    "SELECT * FROM BorrowedBooks WHERE user_id = ? AND book_id = ?";
+  const isBookBorrowedParams: any = [userId, bookId];
+  const isBookBorrowedResult = await queryDatabaseWithTransaction({
+    sql: isBookBorrowedSql,
+    params: isBookBorrowedParams,
+  });
+
+  if (isBookBorrowedResult[0].length > 0) {
+    throw new Error("Book is already borrowed");
+  }
+
   const sql = "INSERT INTO BorrowedBooks (user_id, book_id) VALUES (?, ?)";
   const params: any = [userId, bookId];
   const result = await queryDatabaseWithTransaction({ sql, params });
@@ -103,6 +115,18 @@ export async function returnBook(
   bookId: number,
   bookScore: number
 ) {
+  const isBookBorrowedSql =
+    "SELECT * FROM BorrowedBooks WHERE user_id = ? AND book_id = ?";
+  const isBookBorrowedParams: any = [userId, bookId];
+  const isBookBorrowedResult = await queryDatabaseWithTransaction({
+    sql: isBookBorrowedSql,
+    params: isBookBorrowedParams,
+  });
+
+  if (isBookBorrowedResult[0].length === 0) {
+    throw new Error("Book is not borrowed by the user");
+  }
+
   let sql = "DELETE FROM BorrowedBooks WHERE user_id = ? AND book_id = ?";
   let params: any = [userId, bookId];
   await queryDatabaseWithTransaction({ sql, params });
