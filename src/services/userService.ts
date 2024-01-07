@@ -1,33 +1,41 @@
 import { queryDatabaseWithTransaction } from "../db/mysqlConf";
 
+/**
+ * Retrieves all users from the database.
+ *
+ * @returns {Promise<any[]>} A promise that resolves to an array of users.
+ */
 export async function getAllUsers(): Promise<any[]> {
-  const sql = "SELECT * FROM Users";
-  const params: any = [];
+  try {
+    const sql = "SELECT id, name FROM Users";
+    const params: any = [];
+    const result = await queryDatabaseWithTransaction({ sql, params });
+    return result;
+  } catch (error) {
+    console.error("Error retrieving users:", error);
+    throw error;
+  }
+}
+
+/**
+ * Creates a new user in the database.
+ *
+ * @param user - The user object to be created.
+ * @returns A Promise that resolves to the created user.
+ */
+export async function createUser(user: string): Promise<any> {
+  const sql = "INSERT IGNORE INTO Users (name) VALUES (?)";
+  const params: any = [user];
   const result = await queryDatabaseWithTransaction({ sql, params });
   return result[0];
 }
 
-async function checkName(name: string) {
-  const nameSql = "SELECT * FROM Users WHERE name = ?";
-  const params: any = [name];
-  const checkName = await queryDatabaseWithTransaction({
-    sql: nameSql,
-    params,
-  });
-  return checkName;
-}
-
-export async function createUser(user: string): Promise<any> {
-  const sql = "INSERT INTO Users (name) VALUES (?)";
-  const params: any = [user];
-  const controlName = await checkName(user);
-  if (!controlName) {
-    const result = await queryDatabaseWithTransaction({ sql, params });
-    return result[0];
-  }
-  return null;
-}
-
+/**
+ * Retrieves a user by their ID from the database.
+ *
+ * @param id - The ID of the user to retrieve.
+ * @returns A Promise that resolves to the user object.
+ */
 export async function getUserById(id: number): Promise<any> {
   const userSql = "SELECT * FROM Users WHERE id = ?";
   const pastBooksSql = `
@@ -69,6 +77,13 @@ export async function getUserById(id: number): Promise<any> {
   };
 }
 
+/**
+ * Function to borrow a book.
+ *
+ * @param sql - The SQL query to retrieve the present books.
+ * @param params - The parameters for the SQL query.
+ * @returns An object with the ID of the user who borrowed the book.
+ */
 export async function borrowBook(userId: number, bookId: number) {
   const sql = "INSERT INTO BorrowedBooks (user_id, book_id) VALUES (?, ?)";
   const params: any = [userId, bookId];
@@ -76,6 +91,13 @@ export async function borrowBook(userId: number, bookId: number) {
   return result[0];
 }
 
+/**
+ * Function to return a book.
+ *
+ * @param userId - The ID of the user who is returning the book.
+ * @param bookId - The ID of the book being returned.
+ * @returns An object with the ID of the user who returned the book.
+ */
 export async function returnBook(
   userId: number,
   bookId: number,
